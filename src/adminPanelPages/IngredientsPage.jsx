@@ -1,204 +1,129 @@
 import React, { useState, useEffect } from "react";
 import styles from "../styles/CoffeeTable.module.css";
 
-const availableIngredients = [
-  {
-    id: 1,
-    name: "Milk",
-    price: 0.5,
-    description: "Fresh cow milk",
-    isInStock: true,
-  },
-  {
-    id: 2,
-    name: "Brown Milk",
-    price: 1.0,
-    description: "Strong coffee shot",
-    isInStock: true,
-  },
-  {
-    id: 3,
-    name: "Sugar",
-    price: 0.2,
-    description: "Sweetener",
-    isInStock: true,
-  },
-  {
-    id: 4,
-    name: "Whipped Cream",
-    price: 0.7,
-    description: "Light whipped cream topping",
-    isInStock: false,
-  },
-  {
-    id: 5,
-    name: "Caramel Syrup",
-    price: 0.6,
-    description: "Rich caramel flavoring",
-    isInStock: true,
-  },
-  {
-    id: 6,
-    name: "Chocolate Syrup",
-    price: 0.6,
-    description: "Dark chocolate flavoring",
-    isInStock: true,
-  },
-  {
-    id: 7,
-    name: "Vanilla Syrup",
-    price: 0.5,
-    description: "Smooth vanilla taste",
-    isInStock: true,
-  },
-  {
-    id: 8,
-    name: "Cinnamon",
-    price: 0.3,
-    description: "Ground cinnamon spice",
-    isInStock: false,
-  },
-  {
-    id: 9,
-    name: "Ice",
-    price: 0.1,
-    description: "Crushed ice",
-    isInStock: true,
-  },
-  {
-    id: 10,
-    name: "Oat Milk",
-    price: 0.6,
-    description: "Vegan milk alternative",
-    isInStock: true,
-  },
-];
-
-const LOCAL_STORAGE_KEY = "addedIngredients";
-
-const saveToLocalStorage = (data) => {
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-};
-
-const loadFromLocalStorage = () => {
-  const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
-};
-
 const IngredientsPage = () => {
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [addedIngredients, setAddedIngredients] = useState([]);
+  const [ingredients, setIngredients] = useState([]);
+  const [newIngredient, setNewIngredient] = useState({
+    name: "",
+    price: "",
+    description: "",
+    isInStock: true,
+  });
 
-  useEffect(() => {
-    const saved = loadFromLocalStorage();
-    setAddedIngredients(saved);
-  }, []);
+  const [editingId, setEditingId] = useState(null);
 
-  useEffect(() => {
-    saveToLocalStorage(addedIngredients);
-  }, [addedIngredients]);
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  const handleCheckboxChange = (id) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
+  const fetchIngredients = async () => {
+    try {
+      const res = await fetch(`${API_URL}/ingredients`);
+      const data = await res.json();
+      setIngredients(data);
+    } catch (err) {
+      console.error("Failed to fetch ingredients", err);
     }
   };
 
-  const handleAddSelected = () => {
-    const selectedIngredients = availableIngredients.filter((ingredient) =>
-      selectedIds.includes(ingredient.id)
-    );
+  const handleAdd = async () => {
+    if (!newIngredient.name || !newIngredient.price) return;
 
-    const newIngredients = selectedIngredients.filter(
-      (newIng) => !addedIngredients.find((i) => i.id === newIng.id)
-    );
-
-    setAddedIngredients([...addedIngredients, ...newIngredients]);
-    setSelectedIds([]);
+    try {
+      const res = await fetch(`${API_URL}/ingredients`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...newIngredient, price: parseFloat(newIngredient.price) }),
+      });
+      const created = await res.json();
+      setIngredients([...ingredients, created]);
+      setNewIngredient({ name: "", price: "", description: "", isInStock: true });
+    } catch (err) {
+      console.error("Failed to add ingredient", err);
+    }
   };
 
-  const handleDelete = (idToRemove) => {
-    const updated = addedIngredients.filter((ing) => ing.id !== idToRemove);
-    setAddedIngredients(updated);
+  const handleDelete = async (id) => {
+    try {
+      await fetch(`${API_URL}/ingredients/${id}`, { method: "DELETE" });
+      setIngredients(ingredients.filter((i) => i.id !== id));
+    } catch (err) {
+      console.error("Failed to delete ingredient", err);
+    }
   };
+
+  const startEditing = (ingredient) => {
+    setEditingId(ingredient.id);
+    setNewIngredient({
+      name: ingredient.name,
+      price: ingredient.price,
+      description: ingredient.description,
+      isInStock: ingredient.isInStock,
+    });
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const res = await fetch(`${API_URL}/ingredients/${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...newIngredient, price: parseFloat(newIngredient.price) }),
+      });
+      const updated = await res.json();
+
+      setIngredients(
+        ingredients.map((ing) => (ing.id === editingId ? updated : ing))
+      );
+      setEditingId(null);
+      setNewIngredient({ name: "", price: "", description: "", isInStock: true });
+    } catch (err) {
+      console.error("Failed to update ingredient", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchIngredients();
+  }, []);
 
   return (
-    <div className={styles.mainDiv}>
-      <h2 className={styles.h2Text}>Add Ingredients</h2>
+    <div className={styles.container}>
+      <h2>Ingredients</h2>
 
-      <div className={styles.coffeeTable}>
-        <table className={styles.ingredientTable}>
-          <thead>
-            <tr>
-              <th>Select</th>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Price ($)</th>
-              <th>Description</th>
-              <th>In Stock</th>
-            </tr>
-          </thead>
-          <tbody>
-            {availableIngredients.map((ingredient) => (
-              <tr key={ingredient.id}>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(ingredient.id)}
-                    onChange={() => handleCheckboxChange(ingredient.id)}
-                  />
-                </td>
-                <td>{ingredient.id}</td>
-                <td>{ingredient.name}</td>
-                <td>{ingredient.price}</td>
-                <td>{ingredient.description}</td>
-                <td>{ingredient.isInStock ? "✅" : "❌"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className={styles.form}>
+        <input
+          type="text"
+          placeholder="Name"
+          value={newIngredient.name}
+          onChange={(e) => setNewIngredient({ ...newIngredient, name: e.target.value })}
+        />
+        <input
+          type="number"
+          placeholder="Price (₾)"
+          value={newIngredient.price}
+          onChange={(e) => setNewIngredient({ ...newIngredient, price: e.target.value })}
+        />
+        <input
+          type="text"
+          placeholder="Description"
+          value={newIngredient.description}
+          onChange={(e) => setNewIngredient({ ...newIngredient, description: e.target.value })}
+        />
+        {editingId ? (
+          <button onClick={handleUpdate}>Update</button>
+        ) : (
+          <button onClick={handleAdd}>Add</button>
+        )}
       </div>
 
-      <button onClick={handleAddSelected} className={styles.addBtn}>
-        ➕ Add Selected
-      </button>
-
-      <h3 className={styles.h2Text}>Added Ingredients</h3>
-      <div className={styles.coffeeTable}>
-        <table className={styles.addedDescription}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Price ($)</th>
-              <th>Description</th>
-              <th>In Stock</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {addedIngredients.map((ingredient) => (
-              <tr key={ingredient.id}>
-                <td>{ingredient.id}</td>
-                <td>{ingredient.name}</td>
-                <td>{ingredient.price}</td>
-                <td>{ingredient.description}</td>
-                <td>{ingredient.isInStock ? "✅" : "❌"}</td>
-                <td>
-                  <button
-                    onClick={() => handleDelete(ingredient.id)}
-                    className={styles.deleteBtn}
-                  >
-                    🗑 Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ul className={styles.list}>
+        {ingredients.map((ing) => (
+          <li key={ing.id} className={styles.listItem}>
+            <strong>{ing.name}</strong> – ₾{ing.price} – {ing.description}
+            <div className={styles.buttons}>
+              <button onClick={() => startEditing(ing)}>Edit</button>
+              <button onClick={() => handleDelete(ing.id)}>Delete</button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

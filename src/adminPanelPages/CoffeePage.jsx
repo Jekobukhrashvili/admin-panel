@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/CoffeeTable.module.css";
 
+const API_URL = "http://localhost:5173/coffee";
+
 const CoffeePage = () => {
   const [coffees, setCoffees] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -12,244 +14,170 @@ const CoffeePage = () => {
   });
   const [editCoffee, setEditCoffee] = useState(null);
 
-
   useEffect(() => {
-    const saved = localStorage.getItem("coffees");
-    if (saved) {
-      setCoffees(JSON.parse(saved));
-    } else {
-      setCoffees([
-        {
-          id: 1,
-          title: "Espresso",
-          ingredients: "Coffee Beans, Water",
-          description: "Strong black coffee",
-          isInStock: true,
-        },
-        {
-          id: 2,
-          title: "Latte",
-          ingredients: "Espresso, Steamed Milk",
-          description: "Creamy and smooth",
-          isInStock: false,
-        },
-        {
-          id: 3,
-          title: "Cappuccino",
-          ingredients: "Espresso, Steamed Milk, Foam",
-          description: "Foamy and rich",
-          isInStock: true,
-        },
-      ]);
-    }
+    fetch(API_URL)
+      .then((res) => res.json())
+      .then((data) => setCoffees(data))
+      .catch((err) => console.error("Failed to load coffees", err));
   }, []);
-
-
-  useEffect(() => {
-    localStorage.setItem("coffees", JSON.stringify(coffees));
-  }, [coffees]);
 
   const handleAddCoffee = () => {
     if (newCoffee.title && newCoffee.ingredients && newCoffee.description) {
-      const lastId =
-        coffees.length > 0 ? Math.max(...coffees.map((c) => c.id)) : 0;
-      const coffeeToAdd = {
-        id: lastId + 1,
-        ...newCoffee,
-      };
-      setCoffees([...coffees, coffeeToAdd]);
-      setNewCoffee({
-        title: "",
-        ingredients: "",
-        description: "",
-        isInStock: false,
-      });
-      setShowAddModal(false);
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCoffee),
+      })
+        .then((res) => res.json())
+        .then((createdCoffee) => {
+          setCoffees((prev) => [...prev, createdCoffee]);
+          setNewCoffee({
+            title: "",
+            ingredients: "",
+            description: "",
+            isInStock: false,
+          });
+          setShowAddModal(false);
+        })
+        .catch((err) => console.error("Failed to add coffee", err));
     }
   };
 
   const handleUpdateCoffee = () => {
-    setCoffees((prev) =>
-      prev.map((c) => (c.id === editCoffee.id ? editCoffee : c))
-    );
-    setEditCoffee(null);
-  };
-
-  const handleView = (coffee) => {
-    alert(
-      `Title: ${coffee.title}\nIngredients: ${
-        coffee.ingredients
-      }\nDescription: ${coffee.description}\nIn Stock: ${
-        coffee.isInStock ? "Yes" : "No"
-      }`
-    );
-  };
-
-  const handleEdit = (coffee) => {
-    setEditCoffee({ ...coffee });
+    fetch(`${API_URL}/${editCoffee.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editCoffee),
+    })
+      .then((res) => res.json())
+      .then((updatedCoffee) => {
+        setCoffees((prev) =>
+          prev.map((c) => (c.id === updatedCoffee.id ? updatedCoffee : c))
+        );
+        setEditCoffee(null);
+      })
+      .catch((err) => console.error("Failed to update coffee", err));
   };
 
   const handleDelete = (id) => {
-    setCoffees((prev) => prev.filter((c) => c.id !== id));
+    fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+    })
+      .then(() => {
+        setCoffees((prev) => prev.filter((c) => c.id !== id));
+      })
+      .catch((err) => console.error("Failed to delete coffee", err));
   };
 
   return (
-    <div className={styles.mainDiv}>
-      <h2 className={styles.h2Text}>☕ Coffee List</h2>
+    <div className={styles.container}>
+      <h1 className={styles.title}>Coffee Manager</h1>
       <button
-        className={`${styles.button} ${styles.addBtn}`}
         onClick={() => setShowAddModal(true)}
+        className={styles.addButton}
       >
-        ➕ Add Coffee
+        Add New Coffee
       </button>
-      <CoffeeTable
-        data={coffees}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
 
       {showAddModal && (
-        <div style={modalStyle}>
-          <div style={modalContentStyle}>
-            <h3>New Coffee</h3>
+        <div className={styles.modal}>
+          <input
+            type="text"
+            placeholder="Title"
+            value={newCoffee.title}
+            onChange={(e) =>
+              setNewCoffee({ ...newCoffee, title: e.target.value })
+            }
+          />
+          <input
+            type="text"
+            placeholder="Ingredients"
+            value={newCoffee.ingredients}
+            onChange={(e) =>
+              setNewCoffee({ ...newCoffee, ingredients: e.target.value })
+            }
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            value={newCoffee.description}
+            onChange={(e) =>
+              setNewCoffee({ ...newCoffee, description: e.target.value })
+            }
+          />
+          <label>
             <input
-              placeholder="Coffee Title"
-              value={newCoffee.title}
+              type="checkbox"
+              checked={newCoffee.isInStock}
               onChange={(e) =>
-                setNewCoffee({ ...newCoffee, title: e.target.value })
+                setNewCoffee({ ...newCoffee, isInStock: e.target.checked })
               }
             />
-            <input
-              placeholder="Ingredients"
-              value={newCoffee.ingredients}
-              onChange={(e) =>
-                setNewCoffee({ ...newCoffee, ingredients: e.target.value })
-              }
-            />
-            <textarea
-              placeholder="Description"
-              value={newCoffee.description}
-              onChange={(e) =>
-                setNewCoffee({ ...newCoffee, description: e.target.value })
-              }
-            />
-            <label>
-              <input
-                type="checkbox"
-                checked={newCoffee.isInStock}
-                onChange={(e) =>
-                  setNewCoffee({
-                    ...newCoffee,
-                    isInStock: e.target.checked,
-                  })
-                }
-              />
-              isInStock?
-            </label>
-            <div style={{ marginTop: "10px" }}>
-              <button onClick={handleAddCoffee}>Add</button>
-              <button onClick={() => setShowAddModal(false)}>Cancel</button>
-            </div>
-          </div>
+            In Stock
+          </label>
+          <button onClick={handleAddCoffee}>Submit</button>
+          <button onClick={() => setShowAddModal(false)}>Cancel</button>
         </div>
       )}
 
       {editCoffee && (
-        <div style={modalStyle}>
-          <div style={modalContentStyle}>
-            <h3>Edit Coffee</h3>
+        <div className={styles.modal}>
+          <input
+            type="text"
+            value={editCoffee.title}
+            onChange={(e) =>
+              setEditCoffee({ ...editCoffee, title: e.target.value })
+            }
+          />
+          <input
+            type="text"
+            value={editCoffee.ingredients}
+            onChange={(e) =>
+              setEditCoffee({ ...editCoffee, ingredients: e.target.value })
+            }
+          />
+          <input
+            type="text"
+            value={editCoffee.description}
+            onChange={(e) =>
+              setEditCoffee({ ...editCoffee, description: e.target.value })
+            }
+          />
+          <label>
             <input
-              placeholder="Coffee Title"
-              value={editCoffee.title}
+              type="checkbox"
+              checked={editCoffee.isInStock}
               onChange={(e) =>
-                setEditCoffee({ ...editCoffee, title: e.target.value })
+                setEditCoffee({ ...editCoffee, isInStock: e.target.checked })
               }
             />
-            <input
-              placeholder="Ingredients"
-              value={editCoffee.ingredients}
-              onChange={(e) =>
-                setEditCoffee({
-                  ...editCoffee,
-                  ingredients: e.target.value,
-                })
-              }
-            />
-            <textarea
-              placeholder="Description"
-              value={editCoffee.description}
-              onChange={(e) =>
-                setEditCoffee({
-                  ...editCoffee,
-                  description: e.target.value,
-                })
-              }
-            />
-            <label>
-              <input
-                type="checkbox"
-                checked={editCoffee.isInStock}
-                onChange={(e) =>
-                  setEditCoffee({
-                    ...editCoffee,
-                    isInStock: e.target.checked,
-                  })
-                }
-              />
-              isInStock?
-            </label>
-            <div style={{ marginTop: "10px" }}>
-              <button onClick={handleUpdateCoffee}>Update</button>
-              <button onClick={() => setEditCoffee(null)}>Cancel</button>
-            </div>
-          </div>
+            In Stock
+          </label>
+          <button onClick={handleUpdateCoffee}>Update</button>
+          <button onClick={() => setEditCoffee(null)}>Cancel</button>
         </div>
       )}
-    </div>
-  );
-};
 
-const CoffeeTable = ({ data, onView, onEdit, onDelete }) => {
-  if (!data || data.length === 0) return <p>No data available</p>;
-  const headers = ["id", "title", "ingredients", "description", "isInStock"];
-
-  return (
-    <div>
       <table className={styles.table}>
         <thead>
           <tr>
-            {headers.map((key) => (
-              <th key={key}>{key.toUpperCase()}</th>
-            ))}
-            <th>ACTION</th>
+            <th>Title</th>
+            <th>Ingredients</th>
+            <th>Description</th>
+            <th>In Stock</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {data.map((coffee) => (
+          {coffees.map((coffee) => (
             <tr key={coffee.id}>
-              {headers.map((key) => (
-                <td key={key}>{String(coffee[key])}</td>
-              ))}
+              <td>{coffee.title}</td>
+              <td>{coffee.ingredients}</td>
+              <td>{coffee.description}</td>
+              <td>{coffee.isInStock ? "Yes" : "No"}</td>
               <td>
-                <button
-                  className={`${styles.button} ${styles.viewBtn}`}
-                  onClick={() => onView(coffee)}
-                >
-                  View
-                </button>
-                <button
-                  className={`${styles.button} ${styles.editBtn}`}
-                  onClick={() => onEdit(coffee)}
-                >
-                  Edit
-                </button>
-                <button
-                  className={`${styles.button} ${styles.deleteBtn}`}
-                  onClick={() => onDelete(coffee.id)}
-                >
-                  Delete
-                </button>
+                <button onClick={() => setEditCoffee(coffee)}>Edit</button>
+                <button onClick={() => handleDelete(coffee.id)}>Delete</button>
               </td>
             </tr>
           ))}
@@ -257,29 +185,6 @@ const CoffeeTable = ({ data, onView, onEdit, onDelete }) => {
       </table>
     </div>
   );
-};
-
-const modalStyle = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: "rgba(0,0,0,0.5)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 999,
-};
-
-const modalContentStyle = {
-  background: "white",
-  padding: "20px",
-  borderRadius: "10px",
-  minWidth: "300px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "10px",
 };
 
 export default CoffeePage;
