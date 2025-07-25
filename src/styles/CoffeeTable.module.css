@@ -1,0 +1,75 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  font-size: 16px;
+  text-align: center;
+}
+
+thead {
+  background-color: #92b4c7;
+}
+.mainDiv {
+  width: 100%;
+}
+.h2Text {
+  text-align: center;
+}
+
+.button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.viewBtn {
+  background-color: #3498db;
+  color: white;
+}
+.viewBtn:hover {
+  background-color: #2980b9;
+}
+
+.editBtn {
+  background-color: #f39c12;
+  color: white;
+}
+.editBtn:hover {
+  background-color: #d68910;
+}
+
+.deleteBtn {
+  background-color: #e74c3c;
+  color: white;
+}
+.deleteBtn:hover {
+  background-color: #c0392b;
+}
+
+.addBtn {
+  background-color: #2ecc71;
+  color: white;
+  padding: 8px 16px;
+  margin-bottom: 16px;
+  font-weight: bold;
+}
+.addBtn:hover {
+  background-color: #27ae60;
+}
+
+.ingredientTable {
+  width: 100%;
+}
+
+.addedDescription {
+  width: 100%;
+}

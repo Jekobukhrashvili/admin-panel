@@ -1,0 +1,72 @@
+.mainDiv {
+  background-color: hsl(180 16% 85%);
+  display: flex;
+  gap: 20px;
+}
+
+.dashboard {
+  background-color: hsl(180 16% 85%);
+  display: flex;
+  gap: 10px;
+}
+
+.dashBtn {
+  background-color: hsl(180 16% 75%);
+  margin-top: 20px;
+  margin-bottom: 15px;
+  font-size: 25px;
+  font-weight: 550px;
+  text-align: center;
+  border: none;
+  font-family: "Courier New", Courier, monospace;
+  color: black;
+  cursor: pointer;
+}
+
+.buttonContainer {
+  display: flex;
+  flex-direction: column;
+  width: 310px;
+  gap: 15px;
+  height: 895px;
+  background-color: hsl(180 16% 75%);
+}
+
+.btn {
+  background-color: hsl(197, 29%, 52%);
+  color: hsl(0, 0%, 0%);
+  border: solid;
+  font-size: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 7px;
+  border: solid 1px rgb(255, 255, 255);
+  border-radius: 10px;
+  text-align: start;
+}
+
+.btn:hover {
+  color: hsl(197, 29%, 52%);
+  background-color: rgb(0, 0, 0);
+  transform: translate(10px);
+  transition: 0.5s;
+}
+
+.welcome {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.welcomeText {
+  color: hsl(184, 82%, 40%);
+  font-size: 120px;
+  padding-bottom: 300px;
+  font-weight: bold;
+  font-style: oblique;
+  padding-left: 110px;
+}
+
+.h2Text {
+  width: 20px;
+}
