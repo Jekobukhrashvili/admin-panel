@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../styles/CoffeeTable.module.css";
 
 const availableIngredients = [
@@ -74,9 +74,29 @@ const availableIngredients = [
   },
 ];
 
+const LOCAL_STORAGE_KEY = "addedIngredients";
+
+const saveToLocalStorage = (data) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+};
+
+const loadFromLocalStorage = () => {
+  const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+  return data ? JSON.parse(data) : [];
+};
+
 const IngredientsPage = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [addedIngredients, setAddedIngredients] = useState([]);
+
+  useEffect(() => {
+    const saved = loadFromLocalStorage();
+    setAddedIngredients(saved);
+  }, []);
+
+  useEffect(() => {
+    saveToLocalStorage(addedIngredients);
+  }, [addedIngredients]);
 
   const handleCheckboxChange = (id) => {
     if (selectedIds.includes(id)) {

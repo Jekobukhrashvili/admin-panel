@@ -1,31 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../styles/CoffeeTable.module.css";
 
 const CoffeePage = () => {
-  const [coffees, setCoffees] = useState([
-    {
-      id: 1,
-      title: "Espresso",
-      ingredients: "Coffee Beans, Water",
-      description: "Strong black coffee",
-      isInStock: true,
-    },
-    {
-      id: 2,
-      title: "Latte",
-      ingredients: "Espresso, Steamed Milk",
-      description: "Creamy and smooth",
-      isInStock: false,
-    },
-    {
-      id: 3,
-      title: "Cappuccino",
-      ingredients: "Espresso, Steamed Milk, Foam",
-      description: "Foamy and rich",
-      isInStock: true,
-    },
-  ]);
-
+  const [coffees, setCoffees] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCoffee, setNewCoffee] = useState({
     title: "",
@@ -33,8 +10,44 @@ const CoffeePage = () => {
     description: "",
     isInStock: false,
   });
-
   const [editCoffee, setEditCoffee] = useState(null);
+
+
+  useEffect(() => {
+    const saved = localStorage.getItem("coffees");
+    if (saved) {
+      setCoffees(JSON.parse(saved));
+    } else {
+      setCoffees([
+        {
+          id: 1,
+          title: "Espresso",
+          ingredients: "Coffee Beans, Water",
+          description: "Strong black coffee",
+          isInStock: true,
+        },
+        {
+          id: 2,
+          title: "Latte",
+          ingredients: "Espresso, Steamed Milk",
+          description: "Creamy and smooth",
+          isInStock: false,
+        },
+        {
+          id: 3,
+          title: "Cappuccino",
+          ingredients: "Espresso, Steamed Milk, Foam",
+          description: "Foamy and rich",
+          isInStock: true,
+        },
+      ]);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    localStorage.setItem("coffees", JSON.stringify(coffees));
+  }, [coffees]);
 
   const handleAddCoffee = () => {
     if (newCoffee.title && newCoffee.ingredients && newCoffee.description) {
@@ -96,7 +109,6 @@ const CoffeePage = () => {
         onDelete={handleDelete}
       />
 
-      {/* Add Modal */}
       {showAddModal && (
         <div style={modalStyle}>
           <div style={modalContentStyle}>
@@ -127,7 +139,10 @@ const CoffeePage = () => {
                 type="checkbox"
                 checked={newCoffee.isInStock}
                 onChange={(e) =>
-                  setNewCoffee({ ...newCoffee, isInStock: e.target.checked })
+                  setNewCoffee({
+                    ...newCoffee,
+                    isInStock: e.target.checked,
+                  })
                 }
               />
               isInStock?
@@ -155,14 +170,20 @@ const CoffeePage = () => {
               placeholder="Ingredients"
               value={editCoffee.ingredients}
               onChange={(e) =>
-                setEditCoffee({ ...editCoffee, ingredients: e.target.value })
+                setEditCoffee({
+                  ...editCoffee,
+                  ingredients: e.target.value,
+                })
               }
             />
             <textarea
               placeholder="Description"
               value={editCoffee.description}
               onChange={(e) =>
-                setEditCoffee({ ...editCoffee, description: e.target.value })
+                setEditCoffee({
+                  ...editCoffee,
+                  description: e.target.value,
+                })
               }
             />
             <label>
